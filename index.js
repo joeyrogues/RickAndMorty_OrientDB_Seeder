@@ -42,6 +42,7 @@ const run = async () => {
     db.query('DELETE EDGE MENTIONS'),
     db.query('DELETE EDGE VISITED')
   ])
+  .catch(() => null)
 
   const [
     Character, Episode, Location, PlaysIn, WasLocatedOn
