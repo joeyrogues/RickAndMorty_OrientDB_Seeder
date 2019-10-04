@@ -15,6 +15,6 @@ ORIENTDB_USERNAME=root \
 ORIENTDB_PASSWORD=rootpwd \
 ORIENTDB_HOST=localhost \
 ORIENTDB_PORT=2424 \
-DEBUG=orientdb.loader \
+DEBUG=RickAndMortyOrientLoader \
 npm start
 ```
