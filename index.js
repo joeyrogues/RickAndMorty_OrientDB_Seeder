@@ -63,18 +63,18 @@ const run = async () => {
     ...characters
       .map(({ id, name, species }) =>
         Character.create({ id, name, species })
-        .then(() => debug(`Created character: ${name}`))
+          .then(() => debug(`Created character: ${name}`))
       ),
     ...episodes
       .map(({ id, name, episode }) =>
         Episode.create({ id, name, episode })
-        .then(() => debug(`Created episode: ${episode}`))
+          .then(() => debug(`Created episode: ${episode}`))
       ),
     ...locations
       .map(({ id, name }) =>
         Location.create({ id, name })
-        .then(() => debug(`Created location: ${name}`)
-      ))
+          .then(() => debug(`Created location: ${name}`))
+      )
   ])
 
   await Promise.all(

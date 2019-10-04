@@ -1,34 +1,43 @@
 const https = require('https')
 const debug = require('debug')('RickAndMortyOrientLoader')
 
+
+const _httpGetter = (url) =>
+  () => new Promise((resolve, reject) =>
+    https.get(url, (resp) => {
+      let data = ''
+      resp.on('data', (chunk) => data += chunk)
+      resp.on('end', () => resolve(JSON.parse(data)))
+    }).on('error', reject)
+  )
+
 const _resourceFetcher = (resourceName) =>
   async () => {
-    const resources = []
-    let totalPageCount = 1
-    for (let currentPage = 1 ; currentPage <= totalPageCount ; currentPage++) {
-      const response = await new Promise((resolve, reject) =>
-        https.get(`https://rickandmortyapi.com/api/${resourceName}/?page=${currentPage}`, (resp) => {
-          let data = ''
-          resp.on('data', (chunk) => data += chunk)
-          resp.on('end', () => resolve(JSON.parse(data)))
-        }).on('error', reject)
+    const URL = `https://rickandmortyapi.com/api/${resourceName}/`
+    const firstResponse = await _httpGetter(`${URL}?page=${1}`)()
+    const totalPageCount = firstResponse.info.pages
+
+    const resources = (
+      await Promise.all(
+        new Array(totalPageCount)
+          .fill(0)
+          .map((_, i) =>
+            _httpGetter(`${URL}/?page=${i + 1}`)()
+          )
       )
-      debug(`fetching episode page #${currentPage}, ${response.results.length} ${resourceName}s`)
-      totalPageCount = response.info.pages
-      resources.push(...response.results)
-    }
+    )
+    .map((response, i) => {
+      debug(`fetching ${resourceName} page #${i + 1}, ${response.results.length} ${resourceName}s`)
+      return response.results
+    })
+    .reduce((resources, resourcesPage) => [...resources, ...resourcesPage], [])
+
     debug(`total of ${resources.length} ${resourceName}s`)
     return resources
   }
 
-const fetchCharacters = _resourceFetcher('character')
-
-const fetchEpisodes = _resourceFetcher('episode')
-
-const fetchLocations = _resourceFetcher('location')
-
 module.exports = {
-  fetchCharacters,
-  fetchEpisodes,
-  fetchLocations
+  fetchCharacters: _resourceFetcher('character'),
+  fetchEpisodes: _resourceFetcher('episode'),
+  fetchLocations: _resourceFetcher('location')
 }
