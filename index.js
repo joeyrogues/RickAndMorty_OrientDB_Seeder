@@ -1,5 +1,6 @@
 const https = require('https')
 const OrientDB = require('orientjs')
+const debug = require('debug')('orientdb.loader')
 
 const DB_NAME = 'RickAndMorty'
 const CHARACTER_CLASSNAME = 'Character'
@@ -18,9 +19,9 @@ const createDbEventually = async (server, dbName) => {
       type:    'graph',
       storage: 'plocal'
     })
-    console.log(`created database '${db.name}'`)
+    debug(`created database '${db.name}'`)
   } else {
-    console.log(`database '${dbName}' already exists`)
+    debug(`database '${dbName}' already exists`)
   }
   return db
 }
@@ -31,9 +32,9 @@ const createVertexEventually = async (db, className) =>{
   let C = classes.find(({ name }) => name === className)
   if (!C) {
     C = await db.class.create(className, 'V');
-    console.log(`created class 'V:${C.name}'`)
+    debug(`created class 'V:${C.name}'`)
   } else {
-    console.log(`class 'V:${C.name}' already exists`)
+    debug(`class 'V:${C.name}' already exists`)
   }
   return C
 }
@@ -44,9 +45,9 @@ const createEdgeEventually = async (db, className) =>{
   let C = classes.find(({ name }) => name === className)
   if (!C) {
     C = await db.class.create(className, 'E');
-    console.log(`created class 'E:${C.name}'`)
+    debug(`created class 'E:${C.name}'`)
   } else {
-    console.log(`class 'E:${C.name}' already exists`)
+    debug(`class 'E:${C.name}' already exists`)
   }
   return C
 }
@@ -64,11 +65,11 @@ const fetchAllCharacters = async () => {
         })
         .on('error', reject)
     )
-    console.log(`fetching character page #${currentPage}, ${response.results.length} characters`)
+    debug(`fetching character page #${currentPage}, ${response.results.length} characters`)
     totalPageCount = response.info.pages
     characters.push(...response.results)
   }
-  console.log(`total of ${characters.length} characters`)
+  debug(`total of ${characters.length} characters`)
   return characters
 }
 
@@ -85,11 +86,11 @@ const fetchAllEpisodes = async () => {
         })
         .on('error', reject)
     )
-    console.log(`fetching episode page #${currentPage}, ${response.results.length} episodes`)
+    debug(`fetching episode page #${currentPage}, ${response.results.length} episodes`)
     totalPageCount = response.info.pages
     episodes.push(...response.results)
   }
-  console.log(`total of ${episodes.length} episodes`)
+  debug(`total of ${episodes.length} episodes`)
   return episodes
 }
 
@@ -106,20 +107,20 @@ const fetchAllLocations = async () => {
         })
         .on('error', reject)
     )
-    console.log(`fetching episode page #${currentPage}, ${response.results.length} locations`)
+    debug(`fetching episode page #${currentPage}, ${response.results.length} locations`)
     totalPageCount = response.info.pages
     locations.push(...response.results)
   }
-  console.log(`total of ${locations.length} locations`)
+  debug(`total of ${locations.length} locations`)
   return locations
 }
 
 const run = async () => {
   const server = OrientDB({
-    host:       'localhost',
-    port:       2424,
-    username:   'root',
-    password:   'rootpwd'
+    host:     process.env.ORIENTDB_HOST     || 'localhost',
+    port:     process.env.ORIENTDB_PORT     || 2424,
+    username: process.env.ORIENTDB_USERNAME || 'root',
+    password: process.env.ORIENTDB_PASSWORD || 'rootpwd'
   })
 
   const db = await createDbEventually(server, DB_NAME)
@@ -146,7 +147,7 @@ const run = async () => {
       name,
       species
     })
-    console.log(`Created character: ${name}`)
+    debug(`Created character: ${name}`)
   }
 
   for ({ id, name, episode } of episodes) {
@@ -155,7 +156,7 @@ const run = async () => {
       name,
       episode
     })
-    console.log(`Created episode: ${episode} - ${name}`)
+    debug(`Created episode: ${episode} - ${name}`)
   }
 
   for ({ id, name } of locations) {
@@ -163,7 +164,7 @@ const run = async () => {
       id,
       name
     })
-    console.log(`Created location: ${name} - ${name}`)
+    debug(`Created location: ${name} - ${name}`)
   }
 
   for (character of characters) {
@@ -176,7 +177,7 @@ const run = async () => {
           SELECT * FROM Character WHERE id = ${character.id}
         )
       `)
-      console.log(`Character#${character.id} <-- MENTIONS -- Episode#[${characterEpisodeIds}]`)
+      debug(`Character#${character.id} <-- MENTIONS -- Episode#[${characterEpisodeIds}]`)
     }
   }
 
@@ -190,7 +191,7 @@ const run = async () => {
           SELECT * FROM Location WHERE id = ${location.id}
         )
       `)
-      console.log(`Location#${location.id} <-- VISITED -- Character[${locationResidentsIds}]`)
+      debug(`Location#${location.id} <-- VISITED -- Character[${locationResidentsIds}]`)
     }
   }
 
